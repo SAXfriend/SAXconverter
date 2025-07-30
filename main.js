@@ -187,7 +187,104 @@ stopBtn.onclick = () => {
 };
 
 // ------------------------------
-// Manejo del botón "Extraer" (reproduce segmento)
+// Función para convertir AudioBuffer en Blob WAV (16-bit PCM)
+// ------------------------------
+function audioBufferToWav(buffer, options = {}) {
+  const numChannels = buffer.numberOfChannels;
+  const sampleRate = buffer.sampleRate;
+  const format = options.float32 ? 3 : 1;
+  const bitDepth = format === 3 ? 32 : 16;
+
+  let result;
+  if (numChannels === 2) {
+    result = interleave(buffer.getChannelData(0), buffer.getChannelData(1));
+  } else {
+    result = buffer.getChannelData(0);
+  }
+
+  const bufferLength = result.length * (bitDepth / 8) + 44;
+  const arrayBuffer = new ArrayBuffer(bufferLength);
+  const view = new DataView(arrayBuffer);
+
+  // RIFF chunk descriptor
+  writeString(view, 0, 'RIFF');
+  view.setUint32(4, 36 + result.length * (bitDepth / 8), true);
+  writeString(view, 8, 'WAVE');
+
+  // fmt subchunk
+  writeString(view, 12, 'fmt ');
+  view.setUint32(16, 16, true); // Subchunk1Size
+  view.setUint16(20, format, true); // AudioFormat
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * numChannels * (bitDepth / 8), true);
+  view.setUint16(32, numChannels * (bitDepth / 8), true);
+  view.setUint16(34, bitDepth, true);
+
+  // data subchunk
+  writeString(view, 36, 'data');
+  view.setUint32(40, result.length * (bitDepth / 8), true);
+
+  // Write PCM samples
+  if (format === 1) { // 16-bit PCM
+    floatTo16BitPCM(view, 44, result);
+  } else { // 32-bit float
+    writeFloat32(view, 44, result);
+  }
+
+  return new Blob([view], { type: 'audio/wav' });
+
+  // Subfunciones
+  function writeString(view, offset, string) {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  }
+
+  function floatTo16BitPCM(output, offset, input) {
+    for (let i = 0; i < input.length; i++, offset += 2) {
+      let s = Math.max(-1, Math.min(1, input[i]));
+      s = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      output.setInt16(offset, s, true);
+    }
+  }
+
+  function writeFloat32(output, offset, input) {
+    for (let i = 0; i < input.length; i++, offset += 4) {
+      output.setFloat32(offset, input[i], true);
+    }
+  }
+
+  function interleave(left, right) {
+    const length = left.length + right.length;
+    const result = new Float32Array(length);
+    let index = 0, inputIndex = 0;
+    while (index < length) {
+      result[index++] = left[inputIndex];
+      result[index++] = right[inputIndex];
+      inputIndex++;
+    }
+    return result;
+  }
+}
+
+// ------------------------------
+// Función para descargar Blob WAV como archivo
+// ------------------------------
+function descargarWav(blob, filename = 'output.wav') {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+}
+
+// ------------------------------
+// Manejo del botón "Extraer" (reproduce segmento y descarga WAV)
 // ------------------------------
 extractBtn.onclick = () => {
   if (error.style.display === 'inline') {
@@ -205,15 +302,21 @@ extractBtn.onclick = () => {
     return;
   }
 
-  // Reanudar el contexto si está suspendido (navegadores modernos requieren interacción del usuario)
+  // Reanudar el contexto si está suspendido
   if (context.state === 'suspended') {
     context.resume().then(() => {
       deshabilitarUI();
       reproducirAudioBuffer(segmento);
+      // Crear blob WAV y lanzar descarga
+      const wavBlob = audioBufferToWav(segmento);
+      descargarWav(wavBlob, 'saxconverter_output.wav');
     });
   } else {
     deshabilitarUI();
     reproducirAudioBuffer(segmento);
+    // Crear blob WAV y lanzar descarga
+    const wavBlob = audioBufferToWav(segmento);
+    descargarWav(wavBlob, 'saxconverter_output.wav');
   }
 };
 
