@@ -178,7 +178,7 @@ function habilitarUI() {
 // ------------------------------
 // Botón EXTRAER - simula extracción de audio segmento
 // ------------------------------
-extractBtn.onclick = () => {
+xtractBtn.onclick = () => {
   if (error.style.display === 'inline') {
     alert("Corrige el rango: 'hasta' debe ser mayor que 'desde'.");
     return;
@@ -188,14 +188,23 @@ extractBtn.onclick = () => {
     return;
   }
 
-  deshabilitarUI();
-
   const segmento = extraerSegmento(desde.value, hasta.value);
   if (!segmento) {
     alert("Rango inválido o sin audio cargado.");
-    habilitarUI();
     return;
   }
+
+  // Si el contexto no está en estado 'running', lo reanudamos (importante en navegadores)
+  if (context.state === 'suspended') {
+    context.resume().then(() => {
+      deshabilitarUI();
+      reproducirAudioBuffer(segmento);
+    });
+  } else {
+    deshabilitarUI();
+    reproducirAudioBuffer(segmento);
+  }
+};
 
   // Aquí iría la lógica para procesar el segmento seleccionado (extraer sonido saxofón etc.)
   // Por ahora sólo simulamos con retraso y mensaje
