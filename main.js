@@ -12,6 +12,19 @@ const hasta = document.getElementById('hasta');
 const error = document.getElementById('error');
 const extractBtn = document.getElementById('extract-btn');
 const sheetBtn = document.getElementById('sheet-btn');
+const stopBtn = document.getElementById('stop-btn');
+
+//-------------------------------
+//Defino el boton stop
+// ------------------------------
+stopBtn.onclick = () => {
+  if (source) {
+    source.stop();
+    source.disconnect();
+    source = null;
+    habilitarUI();
+  }
+};
 
 // ------------------------------
 // Drag & Drop para archivo sobre input
@@ -150,16 +163,16 @@ function reproducirAudioBuffer(buffer) {
   }
 }
 
-
 // ------------------------------
 // Función para deshabilitar la interfaz mientras se procesa
 // ------------------------------
 function deshabilitarUI() {
-  extractBtn.disabled = true;
+extractBtn.disabled = true;
   sheetBtn.disabled = true;
   desde.disabled = true;
   hasta.disabled = true;
   input.disabled = true;
+  stopBtn.disabled = false;
   document.querySelector('h1').classList.add('animado');
 }
 
@@ -167,11 +180,12 @@ function deshabilitarUI() {
 // Función para habilitar la interfaz tras procesar
 // ------------------------------
 function habilitarUI() {
-  extractBtn.disabled = false;
+ extractBtn.disabled = false;
   sheetBtn.disabled = false;
   desde.disabled = false;
   hasta.disabled = false;
   input.disabled = false;
+  stopBtn.disabled = true;
   document.querySelector('h1').classList.remove('animado');
 }
 
