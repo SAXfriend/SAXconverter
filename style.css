@@ -1,0 +1,33 @@
+body {
+  background: #fff;
+  color: #000;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+h1.animado {
+  animation: mover 2s infinite alternate;
+  font-size: 2.5rem;
+}
+@keyframes mover {
+  0% { letter-spacing: 2px; }
+  100% { letter-spacing: 10px; }
+}
+input, button {
+  margin: 10px;
+  padding: 10px;
+  font-size: 1.1rem;
+  border-radius: 5px;
+  border: 1px solid #666;
+}
+button {
+  cursor: pointer;
+  background: #fff;
+  border: 2px solid #333;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.rangos {
+  margin: 20px 0;
+}
