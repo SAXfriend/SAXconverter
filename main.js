@@ -1,6 +1,8 @@
 // Variables globales para audio y contexto Web Audio API
 let audioBuffer = null;
 let context = null;
+let source = null; // Fuente de audio actual para reproducir
+
 
 // Referencias a elementos DOM
 const input = document.getElementById('link-input');
@@ -122,6 +124,32 @@ function extraerSegmento(desdeVal, hastaVal) {
   }
   return nuevoBuffer;
 }
+// ------------------------------
+// Función para reproducir un AudioBuffer
+// ------------------------------
+function reproducirAudioBuffer(buffer) {
+  if (!context) context = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Si ya hay una fuente sonando, la paramos antes de crear una nueva
+  if (source) {
+    source.stop();
+    source.disconnect();
+    source = null;
+  }
+
+  source = context.createBufferSource();
+  source.buffer = buffer;
+  source.connect(context.destination);
+  source.start(0);
+
+  // Cuando termine la reproducción, liberamos la fuente y habilitamos UI
+  source.onended = () => {
+    source.disconnect();
+    source = null;
+    habilitarUI();
+  }
+}
+
 
 // ------------------------------
 // Función para deshabilitar la interfaz mientras se procesa
