@@ -1,10 +1,9 @@
 // Variables globales para audio y contexto Web Audio API
 let audioBuffer = null;
 let context = null;
-let source = null; // Fuente de audio actual para reproducir
+let source = null; // Fuente de audio actual para reproducción
 
-
-// Referencias a elementos DOM
+// Referencias a elementos del DOM
 const input = document.getElementById('link-input');
 const fileInput = document.getElementById('file-input');
 const desde = document.getElementById('desde');
@@ -13,18 +12,6 @@ const error = document.getElementById('error');
 const extractBtn = document.getElementById('extract-btn');
 const sheetBtn = document.getElementById('sheet-btn');
 const stopBtn = document.getElementById('stop-btn');
-
-//-------------------------------
-//Defino el boton stop
-// ------------------------------
-stopBtn.onclick = () => {
-  if (source) {
-    source.stop();
-    source.disconnect();
-    source = null;
-    habilitarUI();
-  }
-};
 
 // ------------------------------
 // Drag & Drop para archivo sobre input
@@ -137,13 +124,14 @@ function extraerSegmento(desdeVal, hastaVal) {
   }
   return nuevoBuffer;
 }
+
 // ------------------------------
 // Función para reproducir un AudioBuffer
 // ------------------------------
 function reproducirAudioBuffer(buffer) {
   if (!context) context = new (window.AudioContext || window.webkitAudioContext)();
 
-  // Si ya hay una fuente sonando, la paramos antes de crear una nueva
+  // Si ya hay una fuente sonando, la paramos primero
   if (source) {
     source.stop();
     source.disconnect();
@@ -155,7 +143,7 @@ function reproducirAudioBuffer(buffer) {
   source.connect(context.destination);
   source.start(0);
 
-  // Cuando termine la reproducción, liberamos la fuente y habilitamos UI
+  // Cuando termina de reproducirse, se limpia y habilita UI
   source.onended = () => {
     source.disconnect();
     source = null;
@@ -164,10 +152,10 @@ function reproducirAudioBuffer(buffer) {
 }
 
 // ------------------------------
-// Función para deshabilitar la interfaz mientras se procesa
+// Funciones para bloquear y desbloquear la UI
 // ------------------------------
 function deshabilitarUI() {
-extractBtn.disabled = true;
+  extractBtn.disabled = true;
   sheetBtn.disabled = true;
   desde.disabled = true;
   hasta.disabled = true;
@@ -176,11 +164,8 @@ extractBtn.disabled = true;
   document.querySelector('h1').classList.add('animado');
 }
 
-// ------------------------------
-// Función para habilitar la interfaz tras procesar
-// ------------------------------
 function habilitarUI() {
- extractBtn.disabled = false;
+  extractBtn.disabled = false;
   sheetBtn.disabled = false;
   desde.disabled = false;
   hasta.disabled = false;
@@ -190,9 +175,21 @@ function habilitarUI() {
 }
 
 // ------------------------------
-// Botón EXTRAER - simula extracción de audio segmento
+// Manejo del botón "Parar"
 // ------------------------------
-xtractBtn.onclick = () => {
+stopBtn.onclick = () => {
+  if (source) {
+    source.stop();
+    source.disconnect();
+    source = null;
+    habilitarUI();
+  }
+};
+
+// ------------------------------
+// Manejo del botón "Extraer" (reproduce segmento)
+// ------------------------------
+extractBtn.onclick = () => {
   if (error.style.display === 'inline') {
     alert("Corrige el rango: 'hasta' debe ser mayor que 'desde'.");
     return;
@@ -208,7 +205,7 @@ xtractBtn.onclick = () => {
     return;
   }
 
-  // Si el contexto no está en estado 'running', lo reanudamos (importante en navegadores)
+  // Reanudar el contexto si está suspendido (navegadores modernos requieren interacción del usuario)
   if (context.state === 'suspended') {
     context.resume().then(() => {
       deshabilitarUI();
@@ -220,17 +217,8 @@ xtractBtn.onclick = () => {
   }
 };
 
-  // Aquí iría la lógica para procesar el segmento seleccionado (extraer sonido saxofón etc.)
-  // Por ahora sólo simulamos con retraso y mensaje
-
-  setTimeout(() => {
-    alert("Proceso de extracción simulado terminado.");
-    habilitarUI();
-  }, 2000);
-};
-
 // ------------------------------
-// Botón PARTITURA - simula análisis para generar MusicXML
+// Manejo del botón "Partitura" (simulación por ahora)
 // ------------------------------
 sheetBtn.onclick = () => {
   if (error.style.display === 'inline') {
@@ -242,17 +230,15 @@ sheetBtn.onclick = () => {
     return;
   }
 
-  deshabilitarUI();
-
   const segmento = extraerSegmento(desde.value, hasta.value);
   if (!segmento) {
     alert("Rango inválido o sin audio cargado.");
-    habilitarUI();
     return;
   }
 
-  // Aquí iría el código de detección de notas y creación de archivo MusicXML
-  // Por ahora sólo simulamos con retraso y mensaje
+  // Aquí irá la lógica para análisis de notas y creación MusicXML
+
+  deshabilitarUI();
 
   setTimeout(() => {
     alert("Simulación de generación de partitura terminada.");
